@@ -1,7 +1,6 @@
 #include "Object.h"
 
 Object::Object(vec3 scale, vec3 rotation, vec3 position, FigureType typef) {
-
 	GLfloat VertexBufferObject[] = {
 		//front
 		1.0f ,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f,
@@ -46,6 +45,8 @@ Object::Object(vec3 scale, vec3 rotation, vec3 position, FigureType typef) {
 		-1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f,
 		-1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f,
 		1.0f ,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f
+
+	
 	};
 
 	glGenVertexArrays(1, &VAO);
@@ -71,8 +72,9 @@ Object::Object(vec3 scale, vec3 rotation, vec3 position, FigureType typef) {
 
 	this->position = position;
 	this->scale = scale;
-	this->rotation = rotation;
-
+	incrementoRot = 1;
+	start = false;
+	rotacionX = rotacionY = 0;
 }
 
 
@@ -83,22 +85,62 @@ void Object::Draw() {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
-
 }
 void Object::Move(vec3 translation) {
 	position += translation;
 }
-void Object::Rotate(vec3 rota) {
-	rotation += rota;
-}
+
 void Object::Scale(vec3 scal) {
 	scale += scal;
 }
+void Object::Update(GLFWwindow * window) {
+	if (!start) {
+		prevFrame = glfwGetTime();
+		start = true;
+	}
+	bool up = glfwGetKey(window, GLFW_KEY_UP);
+	bool down = glfwGetKey(window, GLFW_KEY_DOWN);
+	bool right = glfwGetKey(window, GLFW_KEY_RIGHT);
+	bool left = glfwGetKey(window, GLFW_KEY_LEFT);
+	bool rotateXPlus = glfwGetKey(window, GLFW_KEY_KP_2);
+	bool rotateXMinus = glfwGetKey(window, GLFW_KEY_KP_8);
+	bool rotateYPlus = glfwGetKey(window, GLFW_KEY_KP_6);
+	bool rotateYMinus = glfwGetKey(window, GLFW_KEY_KP_4);
 
+	float dt = glfwGetTime() - prevFrame;
+
+	prevFrame = glfwGetTime();
+
+	if (rotateXMinus) {
+		rotacionX -= incrementoRot*20*dt;
+	}
+	else if (rotateXPlus) {
+		rotacionX += incrementoRot*20*dt;
+	}if (rotateYMinus) {
+		rotacionY -= incrementoRot* 20 * dt;
+	}
+	else if (rotateYPlus){
+		rotacionY += incrementoRot* 20 * dt;
+	}
+
+	if (up) {
+		position.y += incrementoRot*dt;
+	}
+	else if (down) {
+		position.y -= incrementoRot*dt;
+	}if (right) {
+		position.x += incrementoRot*dt;
+	}
+	else if (left) {
+		position.x -= incrementoRot*dt;
+	}
+
+}
 mat4 Object::GetModelMatrix() {
 	mat4 temp;
 	temp = glm::translate(temp, position);
-	temp = glm::rotate(temp, incrementoRot, rotation);
+	temp = glm::rotate(temp, radians(rotacionX), vec3(1, 0, 0));
+	temp = glm::rotate(temp, radians(rotacionY), vec3(0, 1, 0));
 	temp = glm::scale(temp,scale);
 	return temp;
 }
@@ -110,5 +152,4 @@ vec3 Object::GetPosition() {
 void Object::Delete() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-
 }
